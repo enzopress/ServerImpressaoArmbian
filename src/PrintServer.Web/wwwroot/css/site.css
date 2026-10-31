@@ -1,0 +1,151 @@
+:root {
+    --bg: #f4f5f7;
+    --card: #ffffff;
+    --text: #1d2129;
+    --muted: #667085;
+    --border: #d9dde3;
+    --accent: #1f6feb;
+    --ok-bg: #e6f4ea;
+    --ok-text: #1e6b34;
+    --err-bg: #fdecea;
+    --err-text: #a12622;
+    --idle: #2da44e;
+    --printing: #1f6feb;
+    --disabled: #bf8700;
+    --unknown: #8c959f;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0f1115;
+        --card: #181b21;
+        --text: #e6e8eb;
+        --muted: #9aa3ad;
+        --border: #2c313a;
+        --accent: #4c8dff;
+        --ok-bg: #12301c;
+        --ok-text: #7ee2a0;
+        --err-bg: #3a1513;
+        --err-text: #ff9a94;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+}
+
+.brand { font-weight: 700; color: var(--text); text-decoration: none; }
+
+.topbar nav { display: flex; gap: 0.25rem; }
+
+.topbar nav a {
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.topbar nav a.active { background: var(--bg); color: var(--text); font-weight: 600; }
+
+main { max-width: 640px; margin: 1.5rem auto; padding: 0 1rem; }
+
+footer { text-align: center; color: var(--muted); font-size: 0.85rem; padding: 1rem; }
+
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+}
+
+h1 { font-size: 1.35rem; margin: 0 0 0.75rem; }
+
+.muted { color: var(--muted); }
+.small { font-size: 0.85rem; }
+
+.status { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.status .dot { width: 0.7rem; height: 0.7rem; border-radius: 50%; background: var(--unknown); }
+.status-idle .dot { background: var(--idle); }
+.status-printing .dot { background: var(--printing); animation: pulse 1.2s infinite; }
+.status-disabled .dot { background: var(--disabled); }
+
+@keyframes pulse { 50% { opacity: 0.35; } }
+
+.flash { padding: 0.65rem 0.9rem; border-radius: 8px; margin: 0 0 1rem; }
+.flash.ok { background: var(--ok-bg); color: var(--ok-text); }
+.flash.error { background: var(--err-bg); color: var(--err-text); }
+.flash.error:empty, .validation-summary-valid { display: none; }
+.flash.error ul { margin: 0; padding-left: 1.1rem; }
+
+.print-form { display: grid; gap: 1rem; }
+
+.file-drop {
+    display: grid;
+    gap: 0.4rem;
+    padding: 1.1rem;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.row { display: grid; grid-template-columns: 1fr 2fr; gap: 0.75rem; }
+
+label { display: grid; gap: 0.3rem; font-size: 0.9rem; }
+
+input[type="number"], input[type="text"], input:not([type]) {
+    font: inherit;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+}
+
+button {
+    font: inherit;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    cursor: pointer;
+}
+
+button.primary { background: var(--accent); color: #fff; font-weight: 600; padding: 0.8rem; }
+button.danger { background: transparent; color: var(--err-text); border: 1px solid currentColor; padding: 0.3rem 0.7rem; }
+
+.jobs { width: 100%; border-collapse: collapse; }
+.jobs th, .jobs td { text-align: left; padding: 0.55rem 0.4rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.jobs th { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+.jobs tr.current td { background: color-mix(in srgb, var(--printing) 10%, transparent); }
+
+.badge {
+    display: inline-block;
+    margin-left: 0.3rem;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    background: var(--printing);
+    color: #fff;
+    font-size: 0.75rem;
+}
+
+.empty { color: var(--muted); text-align: center; padding: 1.5rem 0; }
+
+@media (max-width: 420px) {
+    .row { grid-template-columns: 1fr; }
+}

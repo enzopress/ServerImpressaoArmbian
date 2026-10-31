@@ -1,0 +1,33 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Imprimir";
+}
+
+<section class="card">
+    <h1>Imprimir um arquivo</h1>
+    <partial name="_PrinterStatus" model="Model.Status" />
+
+    <form method="post" enctype="multipart/form-data" class="print-form">
+        <div asp-validation-summary="All" class="flash error" role="alert"></div>
+
+        <label class="file-drop">
+            <input asp-for="Upload" type="file" accept=".pdf,.png,.jpg,.jpeg,.txt" required />
+            <span>PDF, imagem (PNG/JPG) ou texto · até 20 MB</span>
+        </label>
+
+        <div class="row">
+            <label>
+                Cópias
+                <input asp-for="Copies" type="number" min="1" max="20" inputmode="numeric" />
+            </label>
+            <label>
+                Páginas <span class="muted">(opcional)</span>
+                <input asp-for="Pages" placeholder="ex.: 1-3,5" autocomplete="off" />
+            </label>
+        </div>
+
+        <button type="submit" class="primary">Imprimir</button>
+        <p class="muted small">Imagens são ajustadas à folha A4. A impressora é só preto e branco, em um lado da folha.</p>
+    </form>
+</section>

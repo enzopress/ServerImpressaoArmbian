@@ -1,0 +1,13 @@
+@page
+@model JobsModel
+@{
+    ViewData["Title"] = "Fila";
+}
+
+<section class="card">
+    <h1>Fila de impressão</h1>
+    <div id="jobs" data-refresh-url="@Url.Page("/Jobs", "Table")" data-refresh-ms="5000">
+        <partial name="_JobsTable" model="Model.View" />
+    </div>
+    <p class="muted small">Atualiza sozinha a cada 5 segundos. Trabalhos enviados pelo celular (AirPrint) ou pelo Windows aparecem aqui, mas só os enviados por esta página podem ser cancelados.</p>
+</section>

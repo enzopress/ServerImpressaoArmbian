@@ -1,0 +1,14 @@
+﻿@page
+@model ErrorModel
+@{
+    ViewData["Title"] = "Erro";
+}
+
+<section class="card">
+    <h1>Algo deu errado</h1>
+    <p>Não foi possível concluir o pedido. Tente de novo em alguns segundos.</p>
+    @if (Model.ShowRequestId)
+    {
+        <p class="muted small">Código para o log: <code>@Model.RequestId</code></p>
+    }
+</section>

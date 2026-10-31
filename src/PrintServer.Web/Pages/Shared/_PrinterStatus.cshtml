@@ -1,0 +1,10 @@
+@model PrinterStatus
+
+<div class="status status-@Model.State.ToString().ToLowerInvariant()">
+    <span class="dot" aria-hidden="true"></span>
+    <strong>@StatusText.For(Model.State)</strong>
+    @if (!string.IsNullOrWhiteSpace(Model.Message))
+    {
+        <span class="muted">— @Model.Message</span>
+    }
+</div>

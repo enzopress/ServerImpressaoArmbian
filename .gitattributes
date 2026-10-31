@@ -1,0 +1,4 @@
+* text=auto
+# Arquivos que vão para o MX9 (Linux) precisam de LF.
+*.sh eol=lf
+*.service eol=lf

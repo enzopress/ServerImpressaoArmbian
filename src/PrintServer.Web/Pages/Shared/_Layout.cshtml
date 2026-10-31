@@ -1,0 +1,36 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <title>@ViewData["Title"] · Impressora</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body>
+    <header class="topbar">
+        <a class="brand" asp-page="/Index">🖨️ Impressora</a>
+        <nav>
+            <a asp-page="/Index" class="@(ViewContext.RouteData.Values["page"] as string == "/Index" ? "active" : null)">Imprimir</a>
+            <a asp-page="/Jobs" class="@(ViewContext.RouteData.Values["page"] as string == "/Jobs" ? "active" : null)">Fila</a>
+        </nav>
+    </header>
+
+    <main>
+        @if (TempData["Message"] is string message)
+        {
+            <p class="flash ok" role="status">@message</p>
+        }
+        @if (TempData["Error"] is string error)
+        {
+            <p class="flash error" role="alert">@error</p>
+        }
+        @RenderBody()
+    </main>
+
+    <footer>HP Laser MFP 135a · MX9</footer>
+
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

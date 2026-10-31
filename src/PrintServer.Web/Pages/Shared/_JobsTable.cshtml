@@ -1,0 +1,46 @@
+@model JobsView
+
+<partial name="_PrinterStatus" model="Model.Status" />
+
+@if (Model.Error is not null)
+{
+    <p class="flash error" role="alert">@Model.Error</p>
+}
+else if (Model.Jobs.Count == 0)
+{
+    <p class="empty">Nenhum trabalho na fila.</p>
+}
+else
+{
+    <table class="jobs">
+        <thead>
+            <tr><th>Trabalho</th><th>Enviado</th><th>Tamanho</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var job in Model.Jobs)
+            {
+                <tr class="@(job.Id == Model.Status.CurrentJobId ? "current" : null)">
+                    <td>
+                        @job.Id
+                        @if (job.Id == Model.Status.CurrentJobId)
+                        {
+                            <span class="badge">imprimindo</span>
+                        }
+                        <div class="muted small">@job.User</div>
+                    </td>
+                    <td>@(job.SubmittedAt?.ToString("dd/MM HH:mm", System.Globalization.CultureInfo.InvariantCulture) ?? "—")</td>
+                    <td>@(job.SizeBytes >= 1024 * 1024 ? $"{job.SizeBytes / 1024d / 1024d:0.0} MB" : $"{Math.Max(1, job.SizeBytes / 1024)} KB")</td>
+                    <td>
+                        @if (Model.CanCancel(job))
+                        {
+                            <form method="post" asp-page="/Jobs" asp-page-handler="Cancel" asp-route-id="@job.Id"
+                                  data-confirm="Cancelar o trabalho @job.Id?">
+                                <button type="submit" class="danger">Cancelar</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
