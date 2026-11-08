@@ -22,7 +22,7 @@ export DEBIAN_FRONTEND=noninteractive
 echo "==> Pacotes"
 apt-get install -y -q --no-install-recommends python3-yaml wget ca-certificates
 
-# O proprio servidor continua usando o DNS do roteador: se o AdGuard cair, ele nao fica sem DNS.
+# O dns-local.sh troca o link do /etc/resolv.conf por um arquivo fixo: reinstalar nao pode desfazer.
 if systemctl is-active -q systemd-resolved; then
   echo "==> Liberando a porta 53 (stub do systemd-resolved)"
   install -d /etc/systemd/resolved.conf.d
@@ -30,7 +30,7 @@ if systemctl is-active -q systemd-resolved; then
 [Resolve]
 DNSStubListener=no
 EOF
-  ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf
+  if [ -L /etc/resolv.conf ]; then ln -sf /run/systemd/resolve/resolv.conf /etc/resolv.conf; fi
   systemctl restart systemd-resolved
 fi
 
@@ -55,4 +55,5 @@ if [ -f /opt/AdGuardHome/AdGuardHome.yaml ]; then
   echo "==> Configurado. Para reaplicar: python3 /opt/AdGuardHome/apply-settings.py"
 else
   echo "==> Abra http://$IP:3000 e conclua o assistente (painel na porta 3000, DNS na 53)."
+  echo "==> Depois rode deploy/adguard/dns-local.sh (necessario para o wa-print)."
 fi

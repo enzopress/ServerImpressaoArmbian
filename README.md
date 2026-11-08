@@ -87,9 +87,11 @@ liga o MX9 ao seu WhatsApp como um **aparelho conectado** e imprime o que for en
 
 **Instalar e vincular:**
 1. No WhatsApp, crie o grupo **Impressora** (outro nome: `-ChatName`).
-2. `.\deploy\whatsapp\deploy.ps1`: compila para ARMv7 e instala o serviço `wa-print`. Na primeira vez gera a
+2. Com o AdGuard instalado, rode `.\deploy\run-remote.ps1 deploy\adguard\dns-local.sh`. Sem isso, o DNS do
+   roteador da Vivo pode impedir a conexão com o WhatsApp (`no such host`).
+3. `.\deploy\whatsapp\deploy.ps1`: compila para ARMv7 e instala o serviço `wa-print`. Na primeira vez gera a
    chave da API no próprio MX9 (em `/etc/printserver.env` e `/etc/wa-print.env`, 0600).
-3. Abra `http://impressora.casa/WhatsApp`, clique em **Vincular com QR code** e, no celular, vá em
+4. Abra `http://impressora.casa/WhatsApp`, clique em **Vincular com QR code** e, no celular, vá em
    WhatsApp → Aparelhos conectados → Conectar aparelho e aponte a câmera. A vinculação por número
    continua disponível na página, mas não funciona em contas com passkey.
 
