@@ -15,7 +15,8 @@ public sealed record WaPrintStatus(
     [property: JsonPropertyName("phone")] string? Phone,
     [property: JsonPropertyName("chatName")] string? ChatName,
     [property: JsonPropertyName("chatFound")] bool ChatFound,
-    [property: JsonPropertyName("recent")] IReadOnlyList<WaPrintRecent>? Recent)
+    [property: JsonPropertyName("recent")] IReadOnlyList<WaPrintRecent>? Recent,
+    [property: JsonPropertyName("qrActive")] bool QrActive = false)
 {
     public static WaPrintStatus Offline { get; } = new(false, false, false, null, null, false, []);
 }
@@ -54,6 +55,39 @@ public sealed class WaPrintClient(HttpClient http, ILogger<WaPrintClient> logger
         {
             logger.LogWarning(ex, "Falha ao pedir o código de pareamento");
             return new WaPairResult(null, "O serviço do WhatsApp (wa-print) não está respondendo.");
+        }
+    }
+
+    /// <summary>Abre a vinculação por QR code; devolve o erro, ou null se começou.</summary>
+    public async Task<string?> StartQrAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var response = await http.PostAsync("pair-qr", null, ct);
+            if (response.IsSuccessStatusCode)
+                return null;
+            var body = await response.Content.ReadFromJsonAsync<WaPairResult>(ct);
+            return body?.Error ?? "Não foi possível iniciar a vinculação.";
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or System.Text.Json.JsonException)
+        {
+            logger.LogWarning(ex, "Falha ao iniciar a vinculação por QR");
+            return "O serviço do WhatsApp (wa-print) não está respondendo.";
+        }
+    }
+
+    /// <summary>QR atual em PNG, ou null se não há vinculação por QR aberta.</summary>
+    public async Task<byte[]?> GetQrPngAsync(CancellationToken ct)
+    {
+        try
+        {
+            using var response = await http.GetAsync("qr.png", ct);
+            return response.IsSuccessStatusCode ? await response.Content.ReadAsByteArrayAsync(ct) : null;
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            logger.LogDebug(ex, "QR indisponível");
+            return null;
         }
     }
 }

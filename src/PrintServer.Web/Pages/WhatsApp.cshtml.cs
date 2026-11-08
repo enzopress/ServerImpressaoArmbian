@@ -19,6 +19,29 @@ public class WhatsAppModel(WaPrintClient waPrint) : PageModel
 
     public async Task OnGetAsync(CancellationToken ct) => Status = await waPrint.GetStatusAsync(ct);
 
+    /// <summary>Abre a vinculação por QR code (a recomendada: não esbarra na exigência de passkey).</summary>
+    public async Task<IActionResult> OnPostQrAsync(CancellationToken ct)
+    {
+        var error = await waPrint.StartQrAsync(ct);
+        if (error is not null)
+        {
+            ModelState.AddModelError(string.Empty, error);
+            Status = await waPrint.GetStatusAsync(ct);
+            return Page();
+        }
+        return RedirectToPage();
+    }
+
+    /// <summary>Imagem do QR atual (muda a cada ~20 s).</summary>
+    public async Task<IActionResult> OnGetQrImageAsync(CancellationToken ct)
+    {
+        var png = await waPrint.GetQrPngAsync(ct);
+        if (png is null)
+            return NotFound();
+        Response.Headers.CacheControl = "no-store";
+        return File(png, "image/png");
+    }
+
     public async Task<IActionResult> OnPostPairAsync(CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(Phone))

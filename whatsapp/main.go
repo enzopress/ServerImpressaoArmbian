@@ -1,6 +1,6 @@
-// wa-print: imprime no MX9 os PDFs e fotos enviados num grupo do WhatsApp.
+// wa-print: imprime no servidor de impressão os PDFs e fotos enviados num grupo do WhatsApp.
 //
-// O MX9 vira um "aparelho conectado" da conta (como o WhatsApp Web). Só a conversa
+// O servidor vira um "aparelho conectado" da conta (como o WhatsApp Web). Só a conversa
 // configurada é processada; o resto é descartado sem gravar nem logar.
 // Estado e vinculação em http://127.0.0.1:8085 (lido pela página /WhatsApp do PrintServer).
 package main
@@ -22,6 +22,7 @@ import (
 	"syscall"
 	"time"
 
+	qrcode "github.com/skip2/go-qrcode"
 	"go.mau.fi/whatsmeow"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/store"
@@ -79,8 +80,9 @@ type recent struct {
 }
 
 type app struct {
-	cfg     config
-	client  *whatsmeow.Client
+	cfg       config
+	container *sqlstore.Container
+	client    *whatsmeow.Client
 	printer *PrintClient
 	seen    *sql.DB
 	limiter *RateLimiter
@@ -90,6 +92,8 @@ type app struct {
 	chat    types.JID
 	recents []recent
 	pairing bool
+	deleted bool   // a sessão foi apagada (desvinculada): a próxima vinculação começa uma nova
+	qrCode  string // QR atual da vinculação por QR ("" fora dela)
 
 	printMu sync.Mutex // um trabalho por vez
 }
@@ -115,7 +119,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("sessão: %v", err)
 	}
-	store.SetOSInfo("Impressora MX9", [3]uint32{1, 0, 0})
+	store.SetOSInfo("Impressora", [3]uint32{1, 0, 0})
 
 	seen, err := openSeen(filepath.Join(cfg.stateDir, "processed.db"))
 	if err != nil {
@@ -123,8 +127,9 @@ func main() {
 	}
 
 	a := &app{
-		cfg:     cfg,
-		client:  whatsmeow.NewClient(device, waLog.Stdout("wa", "WARN", false)),
+		cfg:       cfg,
+		container: container,
+		client:    whatsmeow.NewClient(device, waLog.Stdout("wa", "WARN", false)),
 		printer: &PrintClient{URL: cfg.apiURL, Key: cfg.apiKey},
 		seen:    seen,
 		limiter: NewRateLimiter(cfg.maxPerHour, time.Hour),
@@ -137,7 +142,7 @@ func main() {
 			log.Printf("conectar: %v", err)
 		}
 	} else {
-		log.Print("não vinculado: gere o código em http://impressora.casa/WhatsApp")
+		log.Print("não vinculado: vincule em http://impressora.casa/WhatsApp")
 	}
 	go a.watchChat(ctx)
 
@@ -245,10 +250,16 @@ func (a *app) onEvent(evt any) {
 		go a.resolveChat(context.Background())
 	case *events.PairSuccess:
 		log.Printf("vinculado ao número %s", e.ID.User)
+	case *events.PairPasskeyRequest:
+		// Desde 06/2026 o WhatsApp pode exigir passkey (WebAuthn de whatsapp.com) na vinculação
+		// por número; um servidor não consegue responder. A vinculação por QR não passa por isso.
+		log.Print("o WhatsApp pediu passkey: vincule pelo QR code em /WhatsApp")
+		a.client.Disconnect()
 	case *events.LoggedOut:
 		log.Print("desvinculado pelo celular")
 		a.mu.Lock()
 		a.chat = types.EmptyJID
+		a.deleted = true // o whatsmeow apagou o aparelho do banco
 		a.mu.Unlock()
 	case *events.Message:
 		a.onMessage(e)
@@ -374,53 +385,72 @@ func (a *app) addRecent(fileName, result string) {
 	}
 }
 
-// --- vinculação pelo número (código de 8 caracteres) ---
+// --- vinculação: QR code (recomendada) ou número (código de 8 caracteres) ---
 
-func (a *app) pair(ctx context.Context, phone string) (string, error) {
+// startPairing conecta sem sessão e espera o primeiro QR. Os QRs seguintes ficam em a.qrCode
+// até a vinculação terminar (sucesso ou expirar).
+func (a *app) startPairing() error {
 	a.mu.Lock()
 	if a.pairing {
 		a.mu.Unlock()
-		return "", errors.New("já existe uma vinculação em andamento; aguarde 1 minuto")
+		return errors.New("já existe uma vinculação em andamento; aguarde 1 minuto")
 	}
 	a.pairing = true
 	a.mu.Unlock()
 	release := func() {
 		a.mu.Lock()
 		a.pairing = false
+		a.qrCode = ""
 		a.mu.Unlock()
 	}
 
 	if a.client.Store.ID != nil {
 		release()
-		return "", errors.New("já está vinculado")
+		return errors.New("já está vinculado")
 	}
 	if a.client.IsConnected() {
 		a.client.Disconnect()
 	}
+	// Depois de uma desvinculação o aparelho foi apagado ("invalid use of deleted device"):
+	// cria uma sessão nova. Sem vínculo não há mensagens chegando, então trocar o cliente é seguro.
+	a.mu.Lock()
+	deleted := a.deleted
+	a.mu.Unlock()
+	if deleted {
+		a.client.RemoveEventHandlers()
+		a.client = whatsmeow.NewClient(a.container.NewDevice(), waLog.Stdout("wa", "WARN", false))
+		a.client.AddEventHandler(a.onEvent)
+		a.mu.Lock()
+		a.deleted = false
+		a.mu.Unlock()
+		log.Print("sessão anterior apagada: iniciando uma nova")
+	}
 	qr, err := a.client.GetQRChannel(context.Background())
 	if err != nil {
 		release()
-		return "", err
+		return err
 	}
 	if err := a.client.Connect(); err != nil {
 		release()
-		return "", err
+		return err
 	}
-	// O código por número só vale depois que o servidor manda o primeiro QR.
 	select {
 	case item := <-qr:
 		if item.Event != whatsmeow.QRChannelEventCode {
 			release()
-			return "", fmt.Errorf("vinculação: %s", item.Event)
+			return fmt.Errorf("vinculação: %s", item.Event)
 		}
+		a.setQR(item.Code)
 	case <-time.After(30 * time.Second):
 		release()
-		return "", errors.New("o WhatsApp não respondeu; tente de novo")
+		return errors.New("o WhatsApp não respondeu; tente de novo")
 	}
 	go func() {
 		defer release()
 		for item := range qr {
 			switch item.Event {
+			case whatsmeow.QRChannelEventCode:
+				a.setQR(item.Code)
 			case "success":
 				log.Print("vinculação concluída")
 				return
@@ -428,9 +458,25 @@ func (a *app) pair(ctx context.Context, phone string) (string, error) {
 				log.Print("vinculação expirou sem confirmação")
 				a.client.Disconnect()
 				return
+			default:
+				log.Printf("vinculação: %s", item.Event)
 			}
 		}
 	}()
+	return nil
+}
+
+func (a *app) setQR(code string) {
+	a.mu.Lock()
+	a.qrCode = code
+	a.mu.Unlock()
+}
+
+// pair vincula pelo número: o código por número só vale depois que o servidor manda o primeiro QR.
+func (a *app) pair(ctx context.Context, phone string) (string, error) {
+	if err := a.startPairing(); err != nil {
+		return "", err
+	}
 	return a.client.PairPhone(ctx, phone, true, whatsmeow.PairClientChrome, "Chrome (Linux)")
 }
 
@@ -442,6 +488,7 @@ func (a *app) routes() http.Handler {
 		a.mu.Lock()
 		rec := append([]recent{}, a.recents...)
 		chatFound := !a.chat.IsEmpty()
+		qrActive := a.qrCode != ""
 		a.mu.Unlock()
 		phone := ""
 		if id := a.client.Store.ID; id != nil {
@@ -454,8 +501,41 @@ func (a *app) routes() http.Handler {
 			"phone":     phone,
 			"chatName":  a.cfg.chatName,
 			"chatFound": chatFound,
+			"qrActive":  qrActive,
 			"recent":    rec,
 		})
+	})
+	mux.HandleFunc("POST /pair-qr", func(w http.ResponseWriter, r *http.Request) {
+		a.mu.Lock()
+		active := a.qrCode != ""
+		a.mu.Unlock()
+		if active { // já tem QR aberto: a página só passa a mostrá-lo
+			writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+			return
+		}
+		if err := a.startPairing(); err != nil {
+			writeJSON(w, http.StatusConflict, map[string]any{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+	})
+	// QR atual em PNG; muda a cada ~20 s enquanto a vinculação está aberta.
+	mux.HandleFunc("GET /qr.png", func(w http.ResponseWriter, r *http.Request) {
+		a.mu.Lock()
+		code := a.qrCode
+		a.mu.Unlock()
+		if code == "" {
+			http.NotFound(w, r)
+			return
+		}
+		png, err := qrcode.Encode(code, qrcode.Medium, 320)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "image/png")
+		w.Header().Set("Cache-Control", "no-store")
+		_, _ = w.Write(png)
 	})
 	mux.HandleFunc("POST /pair", func(w http.ResponseWriter, r *http.Request) {
 		var body struct {

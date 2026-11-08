@@ -39,18 +39,35 @@
         <div class="flash ok" role="status">
             <p>No celular: <strong>WhatsApp → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone</strong> e digite:</p>
             <p class="pair-code">@Model.PairCode</p>
+            <p class="muted">Se o celular pedir passkey ou a vinculação falhar, use o QR code.</p>
+        </div>
+    }
+    else if (s.Online && !s.LoggedIn && s.QrActive)
+    {
+        @* Recarrega para mostrar o QR novo (muda a cada ~20 s) e, ao vincular, o estado "Conectado". *@
+        <meta http-equiv="refresh" content="5" />
+        <div class="flash ok" role="status">
+            <p>No celular: <strong>WhatsApp → Aparelhos conectados → Conectar aparelho</strong> e aponte a câmera para o QR:</p>
+            <p><img class="pair-qr" src="?handler=QrImage&amp;t=@DateTime.UtcNow.Ticks" alt="QR code de vinculação do WhatsApp" width="320" height="320" /></p>
         </div>
     }
     else if (s.Online && !s.LoggedIn)
     {
-        <form method="post" asp-page-handler="Pair" class="print-form">
+        <form method="post" asp-page-handler="Qr" class="print-form">
             <div asp-validation-summary="All" class="flash error" role="alert"></div>
-            <label>
-                Número do seu WhatsApp
-                <input asp-for="Phone" inputmode="tel" placeholder="55 44 99999-9999" autocomplete="tel" />
-            </label>
-            <button type="submit" class="primary">Gerar código de vinculação</button>
+            <button type="submit" class="primary">Vincular com QR code</button>
         </form>
+        <details>
+            <summary>Sem câmera? Vincular pelo número</summary>
+            <form method="post" asp-page-handler="Pair" class="print-form">
+                <label>
+                    Número do seu WhatsApp
+                    <input asp-for="Phone" inputmode="tel" placeholder="55 44 99999-9999" autocomplete="tel" />
+                </label>
+                <button type="submit">Gerar código de vinculação</button>
+                <p class="muted">Contas com passkey não conseguem vincular por número; nesse caso use o QR code.</p>
+            </form>
+        </details>
     }
 </section>
 

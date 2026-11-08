@@ -29,7 +29,7 @@
         @RenderBody()
     </main>
 
-    <footer>HP Laser MFP 135a · MX9</footer>
+    <footer>HP Laser MFP 135a · @Environment.MachineName</footer>
 
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
