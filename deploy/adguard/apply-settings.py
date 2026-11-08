@@ -43,7 +43,7 @@ for f in s["filters"]:
 cfg["filters"] = filters
 
 # Nomes locais: a secao mudou de dns: para filtering: nas versoes recentes.
-# Os nomes que apontam para o MX9 sao substituidos pela lista do arquivo (assim um nome
+# Os nomes que apontam para o servidor sao substituidos pela lista do arquivo (assim um nome
 # antigo some); os demais, criados pelo painel, ficam.
 section = cfg["filtering"] if "filtering" in cfg else dns
 rewrites = [x for x in (section.get("rewrites") or []) if x.get("answer") not in s["server_ips"]]

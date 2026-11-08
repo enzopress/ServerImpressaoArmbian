@@ -1,8 +1,8 @@
 #!/bin/bash
 # Prepara o Dell Inspiron 23 5348 (Debian 13, amd64) para a HP Laser MFP 135a.
-# Versao x86 do setup-mx9.sh: aqui o HP ULD roda nativo (x86_64), sem qemu nem multiarch i386.
+# Aqui o HP ULD roda nativo (x86_64), sem qemu nem multiarch i386.
 # Rodar como root, com a impressora ligada no USB do Dell:
-#   .\deploy\run-remote.ps1 deploy\dell\setup-dell.sh -HostName 192.168.15.16 -KeyFile $env:USERPROFILE\.ssh\id_ed25519_dell
+#   .\deploy\run-remote.ps1 deploy\dell\setup-dell.sh
 set -euo pipefail
 
 ULD_URL="https://ftp.hp.com/pub/softlib/software13/printers/MFP170/uld-hp_V1.00.39.12_00.15.tar.gz"
@@ -12,7 +12,7 @@ PPD="/usr/share/ppd/uld-hp/HP_Laser_MFP_13x_Series.ppd"
 export DEBIAN_FRONTEND=noninteractive
 
 if [ "$(dpkg --print-architecture)" != "amd64" ]; then
-  echo "Este script e para amd64. No MX9 use deploy/setup-mx9.sh." >&2
+  echo "Este script e para amd64. Para ARMv7 use a branch arm." >&2
   exit 1
 fi
 

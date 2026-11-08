@@ -9,7 +9,7 @@ namespace PrintServer.Web.Printing;
 public sealed record PrintApiResponse(bool Success, string? JobId, string? Error);
 
 /// <summary>
-/// POST /api/print: o mesmo envio da página, para outros programas do MX9 (o wa-print).
+/// POST /api/print: o mesmo envio da página, para outros programas do servidor (o wa-print).
 /// Só aceita chamadas da própria máquina e com a chave X-Api-Key.
 /// </summary>
 public static class PrintApi

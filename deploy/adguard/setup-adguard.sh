@@ -1,5 +1,5 @@
 #!/bin/bash
-# AdGuard Home no servidor de impressao (Dell amd64 ou MX9 armv7).
+# AdGuard Home no servidor de impressao (Dell, amd64).
 #   1) .\deploy\run-remote.ps1 deploy\adguard\setup-adguard.sh -HostName <ip> -KeyFile <chave>
 #      instala e deixa o assistente em http://<ip>:3000 (login/senha: o usuario cria).
 #   2) depois do assistente, aplica as configuracoes da casa:
@@ -9,11 +9,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 VERSION="v0.107.80"
-case "$(dpkg --print-architecture)" in
-  amd64) PKG=linux_amd64; SHA256="28593bc761d71469abdbc6f39ca42cbed763ec92b63082c729177b037ed51d18" ;;
-  armhf) PKG=linux_armv7; SHA256="760b941d49eaf92c3fd85ddd47f81530382f5cab8054165fd7f4089e1e9389dc" ;;
-  *) echo "Arquitetura nao suportada: $(dpkg --print-architecture)" >&2; exit 1 ;;
-esac
+if [ "$(dpkg --print-architecture)" != "amd64" ]; then
+  echo "Este script e para amd64. Para ARMv7 use a branch arm." >&2
+  exit 1
+fi
+PKG=linux_amd64
+SHA256="28593bc761d71469abdbc6f39ca42cbed763ec92b63082c729177b037ed51d18"
 URL="https://github.com/AdguardTeam/AdGuardHome/releases/download/$VERSION/AdGuardHome_$PKG.tar.gz"
 IP=$(hostname -I | awk '{print $1}')
 export DEBIAN_FRONTEND=noninteractive

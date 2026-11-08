@@ -1,5 +1,5 @@
 #!/bin/bash
-# Robustez do MX9: watchdog de hardware, atualizações de segurança automáticas,
+# Robustez do servidor: watchdog de hardware, atualizações de segurança automáticas,
 # nftables instalado (as regras são aplicadas à parte, com rollback) e LLMNR desligado.
 # Rodar como root a partir da pasta com os arquivos de deploy/base:
 #   .\deploy\run-remote.ps1 deploy\base\setup-base.sh
@@ -13,13 +13,6 @@ install -m 0644 watchdog.conf /etc/systemd/system.conf.d/watchdog.conf
 install -m 0644 sysctl-mx9.conf /etc/sysctl.d/90-mx9.conf
 sysctl -q --system
 systemctl daemon-reexec
-
-# Limitar a CPU (1,0 GHz) nao resolveu os erros do eMMC no teste de 01/11/2026: CPU no padrao.
-# NAO usar o overlay emmc-pins neste MX9: com ele o eMMC reiniciou 80 vezes e corrompeu
-# leituras no teste de estresse (01/11/2026); sem ele, 0 reinicios.
-if grep -q 'emmc-pins' /boot/armbianEnv.txt; then
-  echo "AVISO: overlay emmc-pins ativo em /boot/armbianEnv.txt; remova e religue o MX9." >&2
-fi
 
 echo "==> Pacotes"
 apt-get update -q
@@ -43,7 +36,7 @@ cat > /etc/systemd/resolved.conf.d/10-mx9.conf <<'EOF'
 [Resolve]
 LLMNR=no
 EOF
-systemctl restart systemd-resolved
+if systemctl is-active -q systemd-resolved; then systemctl restart systemd-resolved; fi
 
 echo "==> Regras do firewall copiadas (ainda não aplicadas)"
 install -m 0644 nftables.conf /etc/nftables.conf.new

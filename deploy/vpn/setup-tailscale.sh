@@ -1,9 +1,9 @@
 #!/bin/bash
-# VPN Tailscale no MX9 como "subnet router" da rede de casa (192.168.15.0/24).
+# VPN Tailscale no servidor como "subnet router" da rede de casa (192.168.15.0/24).
 #   .\deploy\run-remote.ps1 deploy\vpn\setup-tailscale.sh
 # Na primeira vez o "tailscale up" mostra um link de login: o usuario abre e autoriza.
 # Depois, no painel do Tailscale: aprovar a rota 192.168.15.0/24 e, em DNS, usar o IP 100.x
-# do MX9 como nameserver ("Override local DNS") para ter o AdGuard fora de casa.
+# do servidor como nameserver ("Override local DNS") para ter o AdGuard fora de casa.
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 LAN="192.168.15.0/24"
@@ -28,10 +28,10 @@ sysctl -q --system
 systemctl enable --now tailscaled >/dev/null
 
 echo "==> Conectando"
-# O firewall e o NAT ficam no /etc/nftables.conf (forward tailscale0 -> end0 + masquerade):
+# O firewall e o NAT ficam no /etc/nftables.conf (forward tailscale0 -> eno1 + masquerade):
 # netfilter-mode=off impede o Tailscale de mexer nas regras.
 tailscale up --advertise-routes="$LAN" --accept-dns=false --netfilter-mode=off --timeout=10s \
-  || echo "Abra o link acima para autorizar o MX9 e rode este script de novo."
+  || echo "Abra o link acima para autorizar o servidor e rode este script de novo."
 
 tailscale status --peers=false 2>/dev/null || true
 tailscale ip -4 2>/dev/null || true

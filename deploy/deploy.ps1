@@ -1,27 +1,18 @@
 <#
 .SYNOPSIS
-    Publica o PrintServer.Web e instala como servico systemd (MX9 por padrao, ou o Dell).
+    Publica o PrintServer.Web (linux-x64) no servidor Dell e instala como servico systemd.
 .EXAMPLE
     .\deploy\deploy.ps1
-    .\deploy\deploy.ps1 -HostName 192.168.15.2 -ReadyToRun
-    .\deploy\deploy.ps1 -Target Dell
+    .\deploy\deploy.ps1 -ReadyToRun
 #>
 param(
-    [ValidateSet("MX9", "Dell")][string]$Target = "MX9",
-    [string]$HostName,
-    [string]$KeyFile,
+    [string]$HostName = "192.168.15.16",
+    [string]$KeyFile = "$env:USERPROFILE\.ssh\id_ed25519_dell",
     [switch]$ReadyToRun
 )
 
-# MX9: ARMv7 (linux-arm). Dell Inspiron 23 5348: x86_64 (linux-x64).
-$targets = @{
-    MX9  = @{ Host = "192.168.15.2";  Key = "$env:USERPROFILE\.ssh\id_ed25519_mx9";  Runtime = "linux-arm" }
-    Dell = @{ Host = "192.168.15.16"; Key = "$env:USERPROFILE\.ssh\id_ed25519_dell"; Runtime = "linux-x64" }
-}
-$cfg = $targets[$Target]
-if (-not $HostName) { $HostName = $cfg.Host }
-if (-not $KeyFile) { $KeyFile = $cfg.Key }
-$runtime = $cfg.Runtime
+# Dell Inspiron 23 5348 (Intel i5-4440S): x86_64.
+$runtime = "linux-x64"
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
