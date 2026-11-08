@@ -91,6 +91,8 @@ h1 { font-size: 1.35rem; margin: 0 0 0.75rem; }
 .flash.error { background: var(--err-bg); color: var(--err-text); }
 .flash.error:empty, .validation-summary-valid { display: none; }
 .flash.error ul { margin: 0; padding-left: 1.1rem; }
+.flash p { margin: 0.25rem 0; }
+.pair-code { font: 700 1.8rem/1.2 ui-monospace, monospace; letter-spacing: 0.2em; }
 
 .print-form { display: grid; gap: 1rem; }
 

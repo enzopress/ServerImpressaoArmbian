@@ -1,15 +1,27 @@
 <#
 .SYNOPSIS
-    Publica o PrintServer.Web para linux-arm e instala no MX9 como servico systemd.
+    Publica o PrintServer.Web e instala como servico systemd (MX9 por padrao, ou o Dell).
 .EXAMPLE
     .\deploy\deploy.ps1
     .\deploy\deploy.ps1 -HostName 192.168.15.2 -ReadyToRun
+    .\deploy\deploy.ps1 -Target Dell
 #>
 param(
-    [string]$HostName = "192.168.15.2",
-    [string]$KeyFile = "$env:USERPROFILE\.ssh\id_ed25519_mx9",
+    [ValidateSet("MX9", "Dell")][string]$Target = "MX9",
+    [string]$HostName,
+    [string]$KeyFile,
     [switch]$ReadyToRun
 )
+
+# MX9: ARMv7 (linux-arm). Dell Inspiron 23 5348: x86_64 (linux-x64).
+$targets = @{
+    MX9  = @{ Host = "192.168.15.2";  Key = "$env:USERPROFILE\.ssh\id_ed25519_mx9";  Runtime = "linux-arm" }
+    Dell = @{ Host = "192.168.15.16"; Key = "$env:USERPROFILE\.ssh\id_ed25519_dell"; Runtime = "linux-x64" }
+}
+$cfg = $targets[$Target]
+if (-not $HostName) { $HostName = $cfg.Host }
+if (-not $KeyFile) { $KeyFile = $cfg.Key }
+$runtime = $cfg.Runtime
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
@@ -18,11 +30,11 @@ $publish = Join-Path $out "publish"
 $archive = Join-Path $out "printserver.tgz"
 $ssh = @("-i", $KeyFile, "-o", "BatchMode=yes", "-o", "ConnectTimeout=10")
 
-Write-Host "==> Publicando (linux-arm, self-contained)..."
+Write-Host "==> Publicando ($runtime, self-contained)..."
 if (Test-Path $publish) { Remove-Item -Recurse -Force $publish }
 $publishArgs = @(
     "publish", (Join-Path $root "src/PrintServer.Web"),
-    "-c", "Release", "-r", "linux-arm", "--self-contained", "true",
+    "-c", "Release", "-r", $runtime, "--self-contained", "true",
     "-o", $publish, "-nologo", "-v", "q"
 )
 if ($ReadyToRun) { $publishArgs += "-p:PublishReadyToRun=true" }

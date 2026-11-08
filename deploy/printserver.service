@@ -16,6 +16,8 @@ Environment=ASPNETCORE_ENVIRONMENT=Production
 Environment=ASPNETCORE_URLS=http://0.0.0.0:80
 Environment=DOTNET_GCHeapHardLimit=0x8000000
 Environment=DOTNET_NOLOGO=1
+# Segredos (PrintServer__ApiKey, usado pelo wa-print), 0600; o "-" deixa opcional.
+EnvironmentFile=-/etc/printserver.env
 
 # Porta 80 sem rodar como root.
 AmbientCapabilities=CAP_NET_BIND_SERVICE

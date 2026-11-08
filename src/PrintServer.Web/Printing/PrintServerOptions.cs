@@ -22,5 +22,14 @@ public sealed class PrintServerOptions
     /// <summary>Usa o CUPS em memória (desenvolvimento no Windows).</summary>
     public bool UseFakeCups { get; set; }
 
+    /// <summary>
+    /// Chave do POST /api/print (usado pelo wa-print). Vazia desliga o endpoint.
+    /// Em produção vem de /etc/printserver.env (PrintServer__ApiKey), nunca do appsettings.
+    /// </summary>
+    public string ApiKey { get; set; } = "";
+
+    /// <summary>Endereço local do wa-print (ponte do WhatsApp), lido pela página WhatsApp.</summary>
+    public string WaPrintUrl { get; set; } = "http://127.0.0.1:8085";
+
     public long MaxUploadBytes => MaxUploadMb * 1024L * 1024L;
 }

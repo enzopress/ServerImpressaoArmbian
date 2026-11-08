@@ -13,6 +13,7 @@
         <nav>
             <a asp-page="/Index" class="@(ViewContext.RouteData.Values["page"] as string == "/Index" ? "active" : null)">Imprimir</a>
             <a asp-page="/Jobs" class="@(ViewContext.RouteData.Values["page"] as string == "/Jobs" ? "active" : null)">Fila</a>
+            <a asp-page="/WhatsApp" class="@(ViewContext.RouteData.Values["page"] as string == "/WhatsApp" ? "active" : null)">WhatsApp</a>
         </nav>
     </header>
 

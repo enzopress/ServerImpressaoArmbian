@@ -1,0 +1,16 @@
+// Limita o barramento do eMMC do MX9 (RK3228A) a 25 MHz (padrao: 50 MHz em high-speed).
+// Com 50 MHz o eMMC reiniciava sob carga e devolvia leituras corrompidas (testes de 01/11/2026).
+// Instalar: armbian-add-overlay emmc-25mhz.dts  (vale depois de religar)
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "rockchip,rk3228", "rockchip,rk3229";
+
+	fragment@0 {
+		target-path = "/mmc@30020000";
+		__overlay__ {
+			max-frequency = <25000000>;
+		};
+	};
+};

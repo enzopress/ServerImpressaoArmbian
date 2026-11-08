@@ -1,0 +1,40 @@
+# Configuracoes da casa aplicadas sobre o AdGuardHome.yaml criado pelo assistente.
+# Sem segredos: o login/senha do painel (bloco users:) fica como o assistente criou.
+
+http_address: 0.0.0.0:3000
+
+upstream_dns:
+  - https://dns.quad9.net/dns-query
+  - https://cloudflare-dns.com/dns-query
+bootstrap_dns:
+  - 9.9.9.9
+  - 1.1.1.1
+upstream_mode: load_balance
+cache_enabled: true
+cache_size: 4194304
+
+# Poupa o eMMC: historico curto.
+querylog_interval: 24h
+statistics_interval: 168h
+
+filters:
+  - name: AdGuard DNS filter
+    url: https://adguardteam.github.io/HostlistsRegistry/assets/filter_1.txt
+  - name: HaGeZi Multi Normal
+    url: https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/multi.txt
+  # Bloqueia os servidores de DNS criptografado (DoH/DoT) dos navegadores e apps: sem eles,
+  # voltam a usar o AdGuard (e enxergam impressora.casa). O upstream do proprio AdGuard
+  # nao passa pelos filtros.
+  - name: HaGeZi Encrypted DNS (DoH) Bypass
+    url: https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/doh.txt
+
+# Nomes do servidor de impressao (Dell, 192.168.15.16; antes o MX9, .2). A lista substitui
+# os nomes que apontam para esses IPs (os demais, criados pelo painel, ficam).
+# .casa e um dominio real da internet: so funciona em quem usa o AdGuard como DNS.
+server_ips: [192.168.15.16, 192.168.15.2]
+rewrites:
+  - domain: impressora.casa
+    answer: 192.168.15.16
+  # Nome curto: no navegador, digitar "impressora/" (com a barra) ou http://impressora
+  - domain: impressora
+    answer: 192.168.15.16

@@ -1,0 +1,25 @@
+// /etc/apt/apt.conf.d/52unattended-mx9
+// Só atualizações de segurança do Debian, instaladas sozinhas, sem reiniciar.
+// O #clear descarta as origens do 50unattended-upgrades (que incluem o stable comum).
+#clear Unattended-Upgrade::Origins-Pattern;
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename}-security,label=Debian-Security";
+};
+
+// Kernel, DTB e u-boot do Armbian só na mão: uma atualização ruim impede o boot.
+Unattended-Upgrade::Package-Blacklist {
+        "linux-image-";
+        "linux-dtb-";
+        "linux-u-boot-";
+        "armbian-firmware";
+};
+
+// O reboot a quente já travou neste aparelho: reiniciar na tomada quando houver
+// /var/run/reboot-required (o backup.ps1 avisa).
+Unattended-Upgrade::Automatic-Reboot "false";
+Unattended-Upgrade::Remove-Unused-Dependencies "true";
+Unattended-Upgrade::Remove-Unused-Kernel-Packages "false";
+
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";

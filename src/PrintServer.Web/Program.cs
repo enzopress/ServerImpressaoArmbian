@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using PrintServer.Web.Cups;
 using PrintServer.Web.Printing;
+using PrintServer.Web.WhatsApp;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,6 +25,11 @@ else
     builder.Services.AddSingleton<ICupsClient, CupsCliClient>();
 builder.Services.AddSingleton<UploadValidator>();
 builder.Services.AddScoped<PrintService>();
+builder.Services.AddHttpClient<WaPrintClient>(c =>
+{
+    c.BaseAddress = new Uri(printServer.WaPrintUrl.TrimEnd('/') + "/");
+    c.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddRazorPages();
 builder.Services.AddHealthChecks().AddCheck<CupsHealthCheck>("cups");
@@ -41,6 +47,7 @@ app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();
 app.MapHealthChecks("/health");
+app.MapPrintApi();
 
 app.Logger.LogInformation("Fila {Printer}, CUPS {Mode}",
     app.Services.GetRequiredService<IOptions<PrintServerOptions>>().Value.PrinterName,

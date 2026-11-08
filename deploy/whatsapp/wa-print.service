@@ -1,0 +1,30 @@
+[Unit]
+Description=wa-print - imprime PDFs e fotos enviados num grupo do WhatsApp
+After=network-online.target printserver.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=waprint
+Group=waprint
+ExecStart=/opt/wa-print/wa-print
+Restart=on-failure
+RestartSec=10
+
+# WA_CHAT_NAME e PRINT_API_KEY (root:root, 0600; o systemd le antes de trocar de usuario).
+EnvironmentFile=/etc/wa-print.env
+
+# Cria /var/lib/wa-print (dono: waprint, 0700): sessao do WhatsApp e mensagens ja impressas.
+StateDirectory=wa-print
+StateDirectoryMode=0700
+UMask=0077
+
+MemoryMax=150M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/wa-print
+
+[Install]
+WantedBy=multi-user.target

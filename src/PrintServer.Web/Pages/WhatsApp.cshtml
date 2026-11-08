@@ -1,0 +1,71 @@
+@page
+@model WhatsAppModel
+@{
+    ViewData["Title"] = "WhatsApp";
+    var s = Model.Status;
+}
+
+<section class="card">
+    <h1>Imprimir pelo WhatsApp</h1>
+
+    @if (!s.Online)
+    {
+        <div class="status status-unknown"><span class="dot"></span><strong>Desconectado</strong>
+            <span class="muted">o serviço do WhatsApp (wa-print) não está respondendo.</span></div>
+    }
+    else if (!s.LoggedIn)
+    {
+        <div class="status status-disabled"><span class="dot"></span><strong>Não vinculado</strong>
+            <span class="muted">vincule o seu WhatsApp abaixo.</span></div>
+    }
+    else
+    {
+        <div class="status @(s.Connected ? "status-idle" : "status-disabled")"><span class="dot"></span>
+            <strong>@(s.Connected ? "Conectado" : "Reconectando…")</strong>
+            <span class="muted">@s.Phone</span></div>
+        @if (s.ChatFound)
+        {
+            <p>Tudo que for enviado no grupo <strong>@s.ChatName</strong> (PDF ou foto) é impresso. Legenda opcional:
+                <code>2x</code> para 2 cópias, <code>p 1-3</code> para escolher páginas do PDF.</p>
+        }
+        else
+        {
+            <p class="flash error">Não encontrei o grupo <strong>@s.ChatName</strong>. Crie um grupo com esse nome no WhatsApp; ele é detectado em até 1 minuto.</p>
+        }
+    }
+
+    @if (Model.PairCode is not null)
+    {
+        <div class="flash ok" role="status">
+            <p>No celular: <strong>WhatsApp → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone</strong> e digite:</p>
+            <p class="pair-code">@Model.PairCode</p>
+        </div>
+    }
+    else if (s.Online && !s.LoggedIn)
+    {
+        <form method="post" asp-page-handler="Pair" class="print-form">
+            <div asp-validation-summary="All" class="flash error" role="alert"></div>
+            <label>
+                Número do seu WhatsApp
+                <input asp-for="Phone" inputmode="tel" placeholder="55 44 99999-9999" autocomplete="tel" />
+            </label>
+            <button type="submit" class="primary">Gerar código de vinculação</button>
+        </form>
+    }
+</section>
+
+@if (s.Recent is { Count: > 0 })
+{
+    <section class="card">
+        <h2>Últimos arquivos</h2>
+        <table>
+            <thead><tr><th>Quando</th><th>Arquivo</th><th>Resultado</th></tr></thead>
+            <tbody>
+            @foreach (var r in s.Recent)
+            {
+                <tr><td>@r.Time.ToLocalTime().ToString("dd/MM HH:mm")</td><td>@r.File</td><td>@r.Result</td></tr>
+            }
+            </tbody>
+        </table>
+    </section>
+}

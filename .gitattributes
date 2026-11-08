@@ -2,3 +2,6 @@
 # Arquivos que vão para o MX9 (Linux) precisam de LF.
 *.sh eol=lf
 *.service eol=lf
+*.conf eol=lf
+*.yaml eol=lf
+deploy/base/52unattended-mx9 eol=lf
