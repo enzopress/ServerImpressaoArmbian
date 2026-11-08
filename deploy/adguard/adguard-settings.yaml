@@ -28,13 +28,13 @@ filters:
   - name: HaGeZi Encrypted DNS (DoH) Bypass
     url: https://cdn.jsdelivr.net/gh/hagezi/dns-blocklists@latest/adblock/doh.txt
 
-# Nomes do servidor de impressao (Dell, 192.168.15.16; antes o MX9, .2). A lista substitui
+# Nomes do servidor de impressao (MX9, 192.168.15.2; o Dell e o .16). A lista substitui
 # os nomes que apontam para esses IPs (os demais, criados pelo painel, ficam).
 # .casa e um dominio real da internet: so funciona em quem usa o AdGuard como DNS.
 server_ips: [192.168.15.16, 192.168.15.2]
 rewrites:
   - domain: impressora.casa
-    answer: 192.168.15.16
+    answer: 192.168.15.2
   # Nome curto: no navegador, digitar "impressora/" (com a barra) ou http://impressora
   - domain: impressora
-    answer: 192.168.15.16
+    answer: 192.168.15.2

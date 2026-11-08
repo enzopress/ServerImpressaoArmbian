@@ -3,6 +3,10 @@
 Página web para imprimir na **HP Laser MFP 135a** pela rede de casa, rodando num TV box
 **MX9** (RK3228A, ARMv7, 1 GB) com Armbian Debian 13 e CUPS.
 
+> Esta é a branch **`arm`**, guardada para TV boxes ARMv7. O servidor em uso agora é um Dell x86_64,
+> que fica na branch **`amd64`**. O MX9 original foi aposentado porque o eMMC dele corrompe dados
+> (testes de 01/11/2026): nele, rode a partir de um microSD ou use outro aparelho.
+
 - **Imprimir:** envie PDF, PNG, JPG ou TXT (até 20 MB), escolha cópias e páginas.
 - **Fila:** status da impressora e trabalhos na fila, atualizados a cada 5 s. Cancela os
   trabalhos enviados pela página.
@@ -85,10 +89,11 @@ liga o MX9 ao seu WhatsApp como um **aparelho conectado** e imprime o que for en
 1. No WhatsApp, crie o grupo **Impressora** (outro nome: `-ChatName`).
 2. `.\deploy\whatsapp\deploy.ps1`: compila para ARMv7 e instala o serviço `wa-print`. Na primeira vez gera a
    chave da API no próprio MX9 (em `/etc/printserver.env` e `/etc/wa-print.env`, 0600).
-3. Abra `http://impressora.casa/WhatsApp`, informe o número e digite o código no celular:
-   WhatsApp → Aparelhos conectados → Conectar aparelho → Conectar com número de telefone.
+3. Abra `http://impressora.casa/WhatsApp`, clique em **Vincular com QR code** e, no celular, vá em
+   WhatsApp → Aparelhos conectados → Conectar aparelho e aponte a câmera. A vinculação por número
+   continua disponível na página, mas não funciona em contas com passkey.
 
-**Desvincular:** no celular, em Aparelhos conectados, remova "Impressora MX9". A sessão fica em
+**Desvincular:** no celular, em Aparelhos conectados, remova "Impressora". A sessão fica em
 `/var/lib/wa-print/session.db`, que dá acesso à conta: ela não entra no backup, e numa reinstalação
 basta vincular de novo.
 

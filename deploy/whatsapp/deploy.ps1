@@ -6,24 +6,18 @@
     /etc/printserver.env (PrintServer__ApiKey) e /etc/wa-print.env (PRINT_API_KEY):
     a chave nao passa pelo PC nem pelo git. Reinicia o printserver para ler a chave.
 .EXAMPLE
-    .\deploy\whatsapp\deploy.ps1 -Target Dell
-    .\deploy\whatsapp\deploy.ps1 -Target MX9 -ChatName "Impressora"
+    .\deploy\whatsapp\deploy.ps1
+    .\deploy\whatsapp\deploy.ps1 -ChatName "Impressora"
 #>
 param(
-    [ValidateSet("Dell", "MX9")][string]$Target = "Dell",
-    [string]$HostName,
-    [string]$KeyFile,
+    [string]$HostName = "192.168.15.2",
+    [string]$KeyFile = "$env:USERPROFILE\.ssh\id_ed25519_mx9",
     [string]$ChatName = "Impressora"
 )
 
-# Dell Inspiron 23 5348: x86_64. MX9: ARMv7.
-$targets = @{
-    Dell = @{ Host = "192.168.15.16"; Key = "$env:USERPROFILE\.ssh\id_ed25519_dell"; Arch = "amd64"; Arm = "" }
-    MX9  = @{ Host = "192.168.15.2";  Key = "$env:USERPROFILE\.ssh\id_ed25519_mx9";  Arch = "arm";   Arm = "7" }
-}
-$cfg = $targets[$Target]
-if (-not $HostName) { $HostName = $cfg.Host }
-if (-not $KeyFile) { $KeyFile = $cfg.Key }
+# MX9 (RK3228A): ARMv7.
+$arch = "arm"
+$armVersion = "7"
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
@@ -35,12 +29,11 @@ $go = Get-Command go -ErrorAction SilentlyContinue
 if (-not $go -and (Test-Path "C:\Program Files\Go\bin\go.exe")) { $env:Path = "C:\Program Files\Go\bin;$env:Path" }
 elseif (-not $go) { throw "Go nao encontrado. Instale com: winget install --id GoLang.Go" }
 
-Write-Host "==> Compilando (linux/$($cfg.Arch))..."
+Write-Host "==> Compilando (linux/$arch v$armVersion)..."
 New-Item -ItemType Directory -Force $out | Out-Null
 Push-Location (Join-Path $root "whatsapp")
 try {
-    $env:GOOS = "linux"; $env:GOARCH = $cfg.Arch; $env:CGO_ENABLED = "0"
-    if ($cfg.Arm) { $env:GOARM = $cfg.Arm }
+    $env:GOOS = "linux"; $env:GOARCH = $arch; $env:GOARM = $armVersion; $env:CGO_ENABLED = "0"
     & go build -trimpath -ldflags "-s -w" -o $binary .
     if ($LASTEXITCODE -ne 0) { throw "go build falhou." }
 } finally {
